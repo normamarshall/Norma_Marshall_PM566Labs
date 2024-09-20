@@ -30,7 +30,7 @@ Checking dimensions of dataset
 ```{r}
 dim(met)
 head(met)
-tail(met)
+tail(met) 
 ```
 
 #**3. Take a look at the variables.
