@@ -1,0 +1,130 @@
+---
+title: "Lab 3"
+author: "Norma Marshall"
+format: html
+
+embed-resources: true
+
+fig-width: 10
+fig-height: 10
+
+
+---
+```{r}
+download.file(
+  "https://raw.githubusercontent.com/USCbiostats/data-science-data/master/02_met/met_all.gz",
+  destfile = file.path("~", "Downloads", "met_all.gz"),
+  method   = "libcurl",
+  timeout  = 60
+)
+
+
+met <- data.table::fread(file.path("~", "Downloads", "met_all.gz"))
+met <- as.data.frame(met)
+```
+
+## **The objectives of the lab are to find the weather station with the highest elevation and look at patterns in the time series of its wind speed and temperature.**
+
+Checking dimensions of dataset 
+
+```{r}
+dim(met)
+head(met)
+tail(met)
+```
+
+#**3. Take a look at the variables.
+Show the type (class) of each variable (hint: try the str function).
+What are the names of the key variables related to our question of interest?**
+
+
+*Variables of interest are USAFID, elev, year/month/day/hour/min (all measurements of time), wind.sp, and temp.*
+
+```{r}
+
+str(met)
+```
+
+**4. Take a closer look at the key variables**
+
+```{r}
+
+table(met$year)
+table (met$day)
+table(met$hour)
+summary(met$temp)
+summary(met$elev)
+summary(met$wind.sp)
+```
+
+It looks like the elevation variable has observations with 9999.0, which is probably an indicator for missing. We should take a deeper look at the data dictionary to confirm. The wind speed variable is OK but there is a lot of missing data.
+
+After checking the data we should make the appropriate modifications. Replace elevations with 9999 as NA.
+```{r}
+met[met$elev==9999.0, ] <- NA
+summary(met$elev)
+```
+
+**At what elevation is the highest weather station?**
+We also have the issue of the minimum temperature being -40C, which seems implausible, so we should remove those observations.
+
+```{r}
+  met <- met[met$temp > -40, ]
+  head(met[order(met$temp), ])
+```
+
+**6. Calculate summary statistics**
+Remember to keep the initial question in mind. We want to pick out the weather station with maximum elevation and examine its wind speed and temperature.
+
+
+```{r}
+elev <- met[which(met$elev == max(met$elev, na.rm = TRUE)), ]
+summary(elev)
+```
+
+
+Some ideas: select the weather station with maximum elevation; look at the correlation between temperature and wind speed; look at the correlation between temperature and wind speed with hour and day of the month.
+
+```{r}
+cor(elev$temp, elev$wind.sp, use="complete")
+
+cor(elev$temp, elev$hour, use="complete")
+
+cor(elev$wind.sp, elev$day, use="complete")
+
+cor(elev$wind.sp, elev$hour, use="complete")
+
+cor(elev$temp, elev$day, use="complete")
+```
+
+##** 7. Exploratory graphs
+We should look at the distributions of all of the key variables to make sure there are no remaining issues with the data.**## 
+
+Use the hist function to make histograms of the elevation, temperature, and wind speed variables for the whole dataset
+
+```{r eval=FALSE}
+
+leaflet(elev) %>%
+  addProviderTiles('OpenStreetMap') %>% 
+  addCircles(lat=~lat,lng=~lon, opacity=1, fillOpacity=1, radius=100)
+
+
+elev$date <- with(elev, ymd_h(paste(year, month, day, hour, sep= ' ')))
+summary(elev$date)
+
+elev <- elev[order(elev$date), ]
+head(elev)
+
+```
+
+```{r}
+hist(elev$temp, 
+     main = "Histogram of Elevation", 
+     xlab = "Elevation (m)", 
+     col = "lightblue", 
+     border = "black")
+```
+
+
+
+
